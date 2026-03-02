@@ -39,8 +39,7 @@ INSTALLED_APPS = [
     # Your apps
     'accounts',
     'unfold',
-    'unfold.contrib.filters',
-    'unfold.contrib.forms',
+    
 ]
 
 MIDDLEWARE = [
