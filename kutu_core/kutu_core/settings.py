@@ -1,55 +1,50 @@
-import socket
+# settings.py
+
 import os
 from pathlib import Path
 from decouple import config
+import dj_database_url
 
-# 1. Build paths
+# ----------------------------
+# 1. BASE DIR
+# ----------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 2. AUTO-IP DETECTION
-def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('10.255.255.255', 1))
-        IP = s.getsockname()[0]
-    except Exception:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    return IP
-
-LOCAL_IP = get_ip()
-
-# 3. SECURITY
+# ----------------------------
+# 2. SECURITY
+# ----------------------------
 SECRET_KEY = config('DJANGO_SECRET_KEY')
-DEBUG = config('DEBUG', default=True, cast=bool)
-# Added a list comprehension to ensure no empty strings or spaces break the server
-ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS', default=f'{LOCAL_IP},127.0.0.1,localhost,0.0.0.0').split(',')]
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = [host.strip() for host in config(
+    'ALLOWED_HOSTS', 
+    default='127.0.0.1,localhost,0.0.0.0,kutu-backend.onrender.com'
+).split(',')]
 
-# 4. CORS
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-
-# 5. APPLICATION DEFINITION
+# ----------------------------
+# 3. CORS
+# ----------------------------
 INSTALLED_APPS = [
-    "unfold",  # <--- CRITICAL: Must be at the top
-    "unfold.contrib.filters",  # Optional modern filters
-    "unfold.contrib.forms",    # Optional modern forms
+    'corsheaders',  # Must be at the top for middleware
+    # Default Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # Your Apps
-    'accounts',
+
+    # Third-party apps
     'rest_framework',
-    'corsheaders',
+
+    # Your apps
+    'accounts',
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Must be high up
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,8 +54,45 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'kutu_core.urls'
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
+# ----------------------------
+# 4. URLS & WSGI
+# ----------------------------
+ROOT_URLCONF = 'kutu_core.urls'
+WSGI_APPLICATION = 'kutu_core.wsgi.application'
+
+# ----------------------------
+# 5. DATABASE
+# ----------------------------
+# Use Render Postgres URL directly
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgresql://kutu_db_user:voBDFr39HRUO7LKlunDp9BrmlxJ7FGoC@dpg-d6idg314tr6s73cbfti0-a/kutu_db',
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
+
+# ----------------------------
+# 6. AUTH & REST FRAMEWORK
+# ----------------------------
+AUTH_USER_MODEL = 'accounts.User'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# ----------------------------
+# 7. TEMPLATES
+# ----------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -76,50 +108,33 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'kutu_core.wsgi.application'
+# ----------------------------
+# 8. STATIC & MEDIA
+# ----------------------------
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# 6. DATABASE (PostgreSQL)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='kutu_db'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default=5432, cast=int),
-    }
-}
-
-# 7. AUTH & REST FRAMEWORK
-AUTH_USER_MODEL = 'accounts.User'
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
-
-# 8. EMAIL & MEDIA
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-STATIC_URL = 'static/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# 9. INTERNATIONALIZATION
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
+# ----------------------------
+# 9. EMAIL (optional)
+# ----------------------------
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-# 10. UNFOLD CONFIGURATION (The "Nice UI" settings)
+# ----------------------------
+# 10. UNFOLD CONFIG (Your Admin UI)
+# ----------------------------
 UNFOLD = {
     "SITE_TITLE": "KsTU Admin",
     "SITE_HEADER": "KsTU Campus Hub",
-    "SITE_SYMBOL": "map", 
+    "SITE_SYMBOL": "map",
     "COLORS": {
         "primary": {
             "50": "239 246 255",
@@ -127,7 +142,7 @@ UNFOLD = {
             "200": "191 219 254",
             "300": "147 197 253",
             "400": "96 165 250",
-            "500": "43 89 195", # Your Brand Blue #2b59c3
+            "500": "43 89 195",
             "600": "37 99 235",
             "700": "29 78 216",
             "800": "30 64 175",
@@ -141,8 +156,32 @@ UNFOLD = {
     },
 }
 
-# Terminal Info
+# ----------------------------
+# 11. INTERNATIONALIZATION
+# ----------------------------
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# ----------------------------
+# 12. OPTIONAL: Terminal Info (for logs)
+# ----------------------------
+import socket
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+LOCAL_IP = get_ip()
+
 print(f"\n--- 🚀 KUTU BACKEND STARTING ---")
 print(f"Server IP: {LOCAL_IP}")
-print(f"API Base: http://{LOCAL_IP}:8000")
 print(f"-------------------------------\n")
