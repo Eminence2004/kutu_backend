@@ -13,4 +13,3 @@ PyJWT==2.10.1
 pyotp==2.9.0
 sqlparse==0.5.5
 tzdata==2025.3
-postgresql://kutu_db_user:voBDFr39HRUO7LKlunDp9BrmlxJ7FGoC@dpg-d6idg314tr6s73cbfti0-a/kutu_db
