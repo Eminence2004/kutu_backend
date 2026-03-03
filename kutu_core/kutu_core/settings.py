@@ -20,6 +20,12 @@ ALLOWED_HOSTS = [host.strip() for host in config(
     default='127.0.0.1,localhost,0.0.0.0,kutu-backend.onrender.com'
 ).split(',')]
 
+# 🔒 Production Security
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # ----------------------------
 # 3. CORS
 # ----------------------------
@@ -65,15 +71,13 @@ WSGI_APPLICATION = 'kutu_core.wsgi.application'
 # ----------------------------
 # 5. DATABASE
 # ----------------------------
-# Use Render Postgres URL directly
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://kutu_db_user:voBDFr39HRUO7LKlunDp9BrmlxJ7FGoC@dpg-d6idg314tr6s73cbfti0-a/kutu_db',
+        default=config('DATABASE_URL'),
         conn_max_age=600,
         ssl_require=True
     )
 }
-
 # ----------------------------
 # 6. AUTH & REST FRAMEWORK
 # ----------------------------
