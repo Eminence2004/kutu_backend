@@ -5,17 +5,6 @@ from decouple import config
 import dj_database_url
 from datetime import timedelta
 
-
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://nonprotectively-privies-seamus.ngrok-free.dev",
-]
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
-}
-
 # ----------------------------
 # 1. BASE DIR
 # ----------------------------
@@ -28,8 +17,21 @@ SECRET_KEY = config('DJANGO_SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = [host.strip() for host in config(
     'ALLOWED_HOSTS',
-    default='127.0.0.1,localhost,0.0.0.0,10.192.58.81,kutu-backend.onrender.com',
+    default='127.0.0.1,localhost,0.0.0.0',
 ).split(',')]
+
+# Dynamic CSRF trusted origins based on ALLOWED_HOSTS
+CSRF_TRUSTED_ORIGINS = [
+    f"http://{host}" if not host.startswith(('http://', 'https://')) else host
+    for host in ALLOWED_HOSTS if host not in ['127.0.0.1', 'localhost', '0.0.0.0']
+] + [
+    "https://*.sslip.io",
+]
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+}
 
 # 🔒 Production Security
 SECURE_SSL_REDIRECT = not DEBUG
@@ -46,6 +48,10 @@ INSTALLED_APPS = [
     'unfold',
     'unfold.contrib.filters',
     'unfold.contrib.forms',
+    
+    # Cloudinary for media storage
+    'cloudinary_storage',
+    'cloudinary',
 
     # Django core
     'django.contrib.admin',
@@ -58,6 +64,7 @@ INSTALLED_APPS = [
     # Third-party
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt',
     'sslserver',
 
     # Local apps
@@ -96,7 +103,6 @@ WSGI_APPLICATION = 'kutu_core.wsgi.application'
 # ----------------------------
 # 7. DATABASE
 # ----------------------------
-# Uses SQLite locally, PostgreSQL (Neon) in production on Render
 _db_url = config('DATABASE_URL', default='')
 
 if _db_url and not _db_url.startswith('sqlite'):
@@ -161,6 +167,30 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # ----------------------------
+# 10.5. CLOUDINARY (for production media storage)
+# ----------------------------
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True
+)
+
+# Use Cloudinary only in production (when DATABASE_URL exists)
+if _db_url and not _db_url.startswith('sqlite'):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# ----------------------------
 # 11. EMAIL
 # ----------------------------
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -173,10 +203,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ----------------------------
 # 12. UNFOLD ADMIN CONFIG
-# ⚠️ unfold in INSTALLED_APPS must be before django.contrib.admin
 # ----------------------------
-# Replace your existing UNFOLD = { ... } block with this:
-
 UNFOLD = {
     "SITE_TITLE": "KsTU Admin",
     "SITE_HEADER": "KsTU Campus Hub",
@@ -257,6 +284,7 @@ UNFOLD = {
         ],
     },
 }
+
 # ----------------------------
 # 13. INTERNATIONALIZATION
 # ----------------------------
