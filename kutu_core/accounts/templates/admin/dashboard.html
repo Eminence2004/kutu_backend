@@ -1,0 +1,357 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}KsTU Dashboard{% endblock %}
+
+{% block content %}
+<style>
+  .dashboard-wrap {
+    padding: 0 0 40px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .dash-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+
+  .dash-sub {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  /* ── Summary Cards ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.15s;
+  }
+
+  .card:hover { transform: translateY(-2px); }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  .card-val {
+    font-size: 32px;
+    font-weight: 900;
+    color: #2b59c3;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .card-lbl {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .card-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+
+  .card-warn .card-val { color: #f97316; }
+  .card-green .card-val { color: #22c55e; }
+  .card-purple .card-val { color: #a855f7; }
+
+  /* ── Charts ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .charts-grid-full {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .chart-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .chart-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+  }
+
+  .chart-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 20px;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* ── Loading ── */
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: #94a3b8;
+    font-size: 15px;
+  }
+
+  /* ── Pending alerts ── */
+  .alert-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .alert-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff7ed;
+    border: 1.5px solid #f97316;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #9a3412;
+    text-decoration: none;
+  }
+
+  .alert-pill:hover { background: #ffedd5; }
+  .alert-count { font-size: 18px; font-weight: 900; color: #f97316; }
+</style>
+
+<div class="dashboard-wrap">
+  <div class="dash-title">📊 KsTU Campus Hub — Dashboard</div>
+  <div class="dash-sub" id="last-updated">Loading statistics...</div>
+
+  <!-- Pending Alerts -->
+  <div class="alert-row" id="alert-row" style="display:none">
+    <a href="/admin/navigation/suggestedlocation/?status__exact=pending" class="alert-pill" id="alert-locations">
+      <span>📍</span>
+      <span><span class="alert-count" id="pending-loc-count">0</span> location suggestions pending</span>
+    </a>
+    <a href="/admin/navigation/postlocationsuggestion/?status__exact=pending" class="alert-pill" id="alert-postloc">
+      <span>🗺️</span>
+      <span><span class="alert-count" id="pending-postloc-count">0</span> post locations pending</span>
+    </a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="cards-grid" id="cards-grid">
+    <div class="loading">Loading...</div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">👥 Monthly Signups</div>
+      <div class="chart-sub">New student registrations per month</div>
+      <canvas id="signupChart" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📸 Monthly Posts</div>
+      <div class="chart-sub">Vibes posted per month</div>
+      <canvas id="postChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="charts-grid-full">
+    <div class="chart-card">
+      <div class="chart-title">📅 Daily Signups — Last 30 Days</div>
+      <div class="chart-sub">Day-by-day new user activity</div>
+      <canvas id="dailyChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const PRIMARY = '#2b59c3';
+const PRIMARY_LIGHT = 'rgba(43,89,195,0.15)';
+const GREEN = '#22c55e';
+const GREEN_LIGHT = 'rgba(34,197,94,0.15)';
+const ORANGE = '#f97316';
+const GRID_COLOR = 'rgba(100,116,139,0.12)';
+
+const defaultOptions = (yLabel = '') => ({
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1e293b',
+      titleColor: '#f1f5f9',
+      bodyColor: '#94a3b8',
+      borderColor: '#334155',
+      borderWidth: 1,
+      padding: 10,
+    },
+  },
+  scales: {
+    x: {
+      grid: { color: GRID_COLOR },
+      ticks: { color: '#94a3b8', font: { size: 11 } },
+    },
+    y: {
+      grid: { color: GRID_COLOR },
+      ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 1 },
+      title: { display: !!yLabel, text: yLabel, color: '#64748b', font: { size: 11 } },
+    },
+  },
+});
+
+let signupChart, postChart, dailyChart;
+
+async function loadStats() {
+  try {
+    const res = await fetch('/admin/stats-json/');
+    const d = await res.json();
+    const s = d.summary;
+
+    // ── Last updated ──
+    document.getElementById('last-updated').textContent =
+      `Last updated: ${new Date().toLocaleTimeString()} · Auto-refreshes every 60s`;
+
+    // ── Pending alerts ──
+    const alertRow = document.getElementById('alert-row');
+    if (s.pending_locations > 0 || s.pending_post_locations > 0) {
+      alertRow.style.display = 'flex';
+      document.getElementById('pending-loc-count').textContent = s.pending_locations;
+      document.getElementById('pending-postloc-count').textContent = s.pending_post_locations;
+      document.getElementById('alert-locations').style.display =
+        s.pending_locations > 0 ? 'flex' : 'none';
+      document.getElementById('alert-postloc').style.display =
+        s.pending_post_locations > 0 ? 'flex' : 'none';
+    }
+
+    // ── Summary cards ──
+    document.getElementById('cards-grid').innerHTML = `
+      <div class="card">
+        <div class="card-icon">👥</div>
+        <div class="card-val">${s.total_users}</div>
+        <div class="card-lbl">Total Students</div>
+        <div class="card-sub">+${s.new_users_30d} this month</div>
+      </div>
+      <div class="card card-green">
+        <div class="card-icon">✅</div>
+        <div class="card-val">${s.active_users}</div>
+        <div class="card-lbl">Active Users</div>
+        <div class="card-sub">${Math.round(s.active_users / Math.max(s.total_users,1) * 100)}% of total</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📸</div>
+        <div class="card-val">${s.total_posts}</div>
+        <div class="card-lbl">Total Vibes</div>
+        <div class="card-sub">+${s.new_posts_30d} this month</div>
+      </div>
+      <div class="card card-warn">
+        <div class="card-icon">🆕</div>
+        <div class="card-val">${s.new_users_30d}</div>
+        <div class="card-lbl">New This Month</div>
+        <div class="card-sub">Student registrations</div>
+      </div>
+      <div class="card card-purple">
+        <div class="card-icon">📍</div>
+        <div class="card-val">${s.pending_locations + s.pending_post_locations}</div>
+        <div class="card-lbl">Pending Review</div>
+        <div class="card-sub">Map suggestions</div>
+      </div>
+    `;
+
+    // ── Monthly signups chart ──
+    const sCtx = document.getElementById('signupChart').getContext('2d');
+    if (signupChart) signupChart.destroy();
+    signupChart = new Chart(sCtx, {
+      type: 'bar',
+      data: {
+        labels: d.monthly_signups.labels,
+        datasets: [{
+          label: 'Signups',
+          data: d.monthly_signups.data,
+          backgroundColor: PRIMARY_LIGHT,
+          borderColor: PRIMARY,
+          borderWidth: 2,
+          borderRadius: 8,
+        }],
+      },
+      options: defaultOptions('Students'),
+    });
+
+    // ── Monthly posts chart ──
+    const pCtx = document.getElementById('postChart').getContext('2d');
+    if (postChart) postChart.destroy();
+    postChart = new Chart(pCtx, {
+      type: 'bar',
+      data: {
+        labels: d.monthly_posts.labels,
+        datasets: [{
+          label: 'Posts',
+          data: d.monthly_posts.data,
+          backgroundColor: GREEN_LIGHT,
+          borderColor: GREEN,
+          borderWidth: 2,
+          borderRadius: 8,
+        }],
+      },
+      options: defaultOptions('Posts'),
+    });
+
+    // ── Daily signups chart ──
+    const dCtx = document.getElementById('dailyChart').getContext('2d');
+    if (dailyChart) dailyChart.destroy();
+    dailyChart = new Chart(dCtx, {
+      type: 'line',
+      data: {
+        labels: d.daily_signups.labels,
+        datasets: [{
+          label: 'Daily Signups',
+          data: d.daily_signups.data,
+          borderColor: ORANGE,
+          backgroundColor: 'rgba(249,115,22,0.1)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: ORANGE,
+          tension: 0.4,
+          fill: true,
+        }],
+      },
+      options: defaultOptions('Students'),
+    });
+
+  } catch (e) {
+    console.error('Stats load error:', e);
+    document.getElementById('last-updated').textContent = 'Failed to load stats. Is Django running?';
+  }
+}
+
+// Load on page open + refresh every 60s
+loadStats();
+setInterval(loadStats, 60000);
+</script>
+{% endblock %}

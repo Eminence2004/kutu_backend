@@ -1,19 +1,67 @@
+cat > .gitignore << 'EOF'
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
 venv/
 env/
+.venv
 .env
 
 # Django
+*.log
 *.sqlite3
-staticfiles/
-media/
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+/static/
 
 # Excel data files (keep locally only)
 navigation/data/*.xlsx
 
-# OS
+# OS files
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Security keys and certificates
+*.pem
+*.key
+*-key.pem
+*.crt
+10.192.58.81*
+*.pem.enc
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Docker
+*.pid
+Dockerfile
+docker-compose*.yml
+
+# Logs
 *.log
+
+# Local development
+localhost/
+*.local.py
+EOF
