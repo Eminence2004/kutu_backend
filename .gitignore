@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.env
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+
+# Excel data files (keep locally only)
+navigation/data/*.xlsx
+
+# OS
+.DS_Store
+*.log
