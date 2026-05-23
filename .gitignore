@@ -27,7 +27,7 @@ db.sqlite3-journal
 /static/
 
 # Excel data files (keep locally only)
-navigation/data/*.xlsx
+#navigation/data/*.xlsx
 
 # OS files
 .DS_Store
