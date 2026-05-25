@@ -162,6 +162,9 @@ TEMPLATES = [
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Keep for cloudinary_storage package compatibility (it checks this setting)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -187,7 +190,6 @@ cloudinary.config(
 
 # ----------------------------
 # 10.6. STORAGES (Django 4.2+ unified storage config)
-# Replaces DEFAULT_FILE_STORAGE and STATICFILES_STORAGE
 # ----------------------------
 _is_production = _db_url and not _db_url.startswith('sqlite')
 
@@ -322,4 +324,4 @@ def get_ip():
 LOCAL_IP = get_ip()
 print(f"\n--- 🚀 KUTU BACKEND STARTING ---")
 print(f"Server IP: {LOCAL_IP}")
-print(f"-------------------------------\n")s
+print(f"-------------------------------\n")
