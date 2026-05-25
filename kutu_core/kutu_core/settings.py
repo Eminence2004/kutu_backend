@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'unfold',
     'unfold.contrib.filters',
     'unfold.contrib.forms',
-    
+
     # Cloudinary for media storage
     'cloudinary_storage',
     'cloudinary',
@@ -161,7 +161,6 @@ TEMPLATES = [
 # ----------------------------
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -186,9 +185,22 @@ cloudinary.config(
     secure=True
 )
 
-# Use Cloudinary only in production (when DATABASE_URL exists)
-if _db_url and not _db_url.startswith('sqlite'):
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# ----------------------------
+# 10.6. STORAGES (Django 4.2+ unified storage config)
+# Replaces DEFAULT_FILE_STORAGE and STATICFILES_STORAGE
+# ----------------------------
+_is_production = _db_url and not _db_url.startswith('sqlite')
+
+STORAGES = {
+    "default": {
+        # Use Cloudinary in production, local filesystem in dev
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if _is_production else "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        # WhiteNoise for static files in both environments
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # ----------------------------
 # 11. EMAIL
@@ -310,4 +322,4 @@ def get_ip():
 LOCAL_IP = get_ip()
 print(f"\n--- 🚀 KUTU BACKEND STARTING ---")
 print(f"Server IP: {LOCAL_IP}")
-print(f"-------------------------------\n")
+print(f"-------------------------------\n")s
