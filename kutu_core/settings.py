@@ -322,4 +322,4 @@ def get_ip():
 LOCAL_IP = get_ip()
 print(f"\n--- 🚀 KUTU BACKEND STARTING ---")
 print(f"Server IP: {LOCAL_IP}")
-print(f"-------------------------------\n")s
+print(f"-------------------------------\n")
