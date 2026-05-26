@@ -20,6 +20,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY . .
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 # Collect static files
 ENV DJANGO_SETTINGS_MODULE=kutu_core.settings
@@ -29,4 +31,4 @@ RUN SECRET_KEY=dummy-build-key DATABASE_URL=postgres://dummy:dummy@localhost/dum
 EXPOSE 8000
 
 # Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "kutu_core.wsgi:application"]
+CMD ["/start.sh"]
