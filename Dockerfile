@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Collect static files
-RUN python manage.py collectstatic --noinput
+RUN SECRET_KEY=dummy-build-key DATABASE_URL=postgres://dummy:dummy@localhost/dummy python manage.py collectstatic --noinput
 
 # Expose port
 EXPOSE 8000
