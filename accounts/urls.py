@@ -14,6 +14,7 @@ urlpatterns = [
     path('posts/', views.PostView.as_view(), name='posts'),
     path('posts/mine/', views.UserPostView.as_view(), name='my-posts'),
     path('posts/<int:post_id>/like/', views.ToggleLikeView.as_view(), name='toggle-like'),
+    path('posts/<int:post_id>/delete/', views.DeletePostView.as_view(), name='delete-post'),
     path('posts/<int:post_id>/comments/', views.CommentView.as_view(), name='comments'),
 
     # Social

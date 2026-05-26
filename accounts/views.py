@@ -110,6 +110,15 @@ class PostView(APIView):
         return Response({"message": "Vibe posted!"}, status=201)
 
 
+class DeletePostView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+        if post.user != request.user:
+            return Response({"error": "You can only delete your own posts."}, status=403)
+        post.delete()
+        return Response({"message": "Post deleted."}, status=200)
+
 class ToggleLikeView(APIView):
     permission_classes = [IsAuthenticated]
 
