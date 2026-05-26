@@ -48,6 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Permissions & Status
     is_active = models.BooleanField(default=True)
+    date_joined = models.DateTimeField(auto_now_add=True, null=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
