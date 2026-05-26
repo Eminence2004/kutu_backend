@@ -230,7 +230,7 @@ let signupChart, postChart, dailyChart;
 
 async function loadStats() {
   try {
-    const res = await fetch('/admin/stats-json/');
+    const res = await fetch('/admin/stats-json/', { credentials: 'same-origin' });
     const d = await res.json();
     const s = d.summary;
 
