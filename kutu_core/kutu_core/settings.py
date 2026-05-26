@@ -233,10 +233,10 @@ UNFOLD = {
             "800": "30 64 175",
             "900": "30 58 138",
             "950": "23 37 84",
-            "STYLES": [],
-    "SCRIPTS": [],
         },
     },
+    "STYLES": [],
+    "SCRIPTS": [],
     "SIDEBAR": {
         "show_search": True,
         "show_all_applications": True,
