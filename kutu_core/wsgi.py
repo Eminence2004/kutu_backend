@@ -5,4 +5,4 @@ from whitenoise import WhiteNoise
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kutu_core.settings')
 
 application = get_wsgi_application()
-application = WhiteNoise(application, root='/app/staticfiles', prefix='static')
+application = WhiteNoise(application, root='/app/kutu_core/staticfiles', prefix='static')
