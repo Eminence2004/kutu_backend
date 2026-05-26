@@ -209,3 +209,7 @@ urlpatterns = [
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve static files in production via Django
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+urlpatterns += staticfiles_urlpatterns()

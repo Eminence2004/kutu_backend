@@ -160,6 +160,8 @@ TEMPLATES = [
 # 10. STATIC & MEDIA
 # ----------------------------
 STATIC_URL = '/static/'
+STATICFILES_DIRS = []
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
