@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Collect static files
+ENV DJANGO_SETTINGS_MODULE=kutu_core.settings
 RUN SECRET_KEY=dummy-build-key DATABASE_URL=postgres://dummy:dummy@localhost/dummy python manage.py collectstatic --noinput
 
 # Expose port
