@@ -325,3 +325,16 @@ LOCAL_IP = get_ip()
 print(f"\n--- 🚀 KUTU BACKEND STARTING ---")
 print(f"Server IP: {LOCAL_IP}")
 print(f"-------------------------------\n")
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'ERROR',
+    },
+}
