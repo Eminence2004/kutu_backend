@@ -163,7 +163,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Keep for cloudinary_storage package compatibility (it checks this setting)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -195,12 +195,10 @@ _is_production = _db_url and not _db_url.startswith('sqlite')
 
 STORAGES = {
     "default": {
-        # Use Cloudinary in production, local filesystem in dev
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if _is_production else "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        # WhiteNoise for static files in both environments
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
